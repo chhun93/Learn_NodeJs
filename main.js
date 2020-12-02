@@ -3,7 +3,7 @@ var fs = require("fs");
 var url = require("url");
 const { brotliDecompressSync } = require("zlib");
 
-function templateHtml(title, list, body) {
+function templateHtml(title, list, body, control) {
   return `
 <!doctype html>
 <html>
@@ -14,7 +14,7 @@ function templateHtml(title, list, body) {
 <body>
   <h1><a href="/">WEB</a></h1>
   ${list}
-  <a href="/create">create</a>
+  ${control}
   ${body}
 </body>
 </html>
@@ -34,7 +34,7 @@ var app = http.createServer(function (request, response) {
   var requestUrl = request.url;
   var queryData = url.parse(requestUrl, true).query;
   var pathname = url.parse(requestUrl, true).pathname;
-  var qs = require('querystring');
+  var qs = require("querystring");
 
   if (pathname === "/") {
     if (queryData.id === undefined) {
@@ -45,7 +45,8 @@ var app = http.createServer(function (request, response) {
         var template = templateHtml(
           title,
           list,
-          `<h2>${title}</h2>${description}`
+          `<h2>${title}</h2>${description}`,
+          `<a href="/create">create</a>`
         );
         response.writeHead(200);
         response.end(template);
@@ -61,7 +62,10 @@ var app = http.createServer(function (request, response) {
             var template = templateHtml(
               title,
               list,
-              `<h2>${title}</h2>${description}`
+              `<h2>${title}</h2>${description}`,
+              `<a href="/create">create</a>
+              <a href="/update?id=${title}">update</a>
+              `
             );
             response.writeHead(200);
             response.end(template);
@@ -76,12 +80,13 @@ var app = http.createServer(function (request, response) {
       var template = templateHtml(
         title,
         list,
-        `<form action="http://localhost:3000/create_process"
+        `<form action="/create_process"
         method="POST">
         <p><input type="text" name="title" placeholder="title"></p>
         <p><textarea name="description" placeholder="description"></textarea></p>
         <p><input type="submit"></p>
-        </form>`
+        </form>`,
+        ``
       );
       response.writeHead(200);
       response.end(template);
@@ -96,10 +101,53 @@ var app = http.createServer(function (request, response) {
       var title = post.title;
       var description = post.description;
 
-      console.log(title, description);
+      fs.writeFile(`data/${title}`, description, "utf8", function (error) {
+        response.writeHead(302, { Location: `/?id=${title}` }); //302 : redirection page..
+        response.end();
+      });
+    }); // 파일 만들어서 다운받기...
+  } else if (pathname === "/update") {
+    fs.readdir("./data", function (error, fileList) {
+      fs.readFile(`data/${queryData.id}`, "utf8", function (err, description) {
+        var title = queryData.id;
+        var list = templateList(fileList);
+        var template = templateHtml(
+          title,
+          list,
+          `
+            <form action="/update_process" method="POST">
+            <input type="hidden" name="id" value=${title} >
+            <p><input type="text" name="title" value="${title}"></p>
+            <p><textarea name="description" >${description}</textarea></p>
+            <p><input type="submit"></p>
+            </form>
+            `,
+          `<a href="/create">create</a>
+            <a href="/update?id=${title}">update</a>
+            `
+        );
+        response.writeHead(200);
+        response.end(template);
+      });
     });
-    response.writeHead(200);
-    response.end("success");
+  } else if (pathname === "/update_process") {
+    var body = "";
+    request.on("data", function (data) {
+      body += data;
+    });
+    request.on("end", function () {
+      var post = qs.parse(body);
+      var id = post.id;
+      var title = post.title;
+      var description = post.description;
+
+      fs.rename(`data/${id}`, `data/${title}`, function (error) {
+        fs.writeFile(`data/${title}`, description, "utf8", function (error) {
+          response.writeHead(302, { Location: `/?id=${title}` }); //302 : redirection page..
+          response.end();
+        });
+      });
+    });
   } else {
     response.writeHead(404);
     response.end("Not found");
