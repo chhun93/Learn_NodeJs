@@ -98,10 +98,11 @@ var app = http.createServer(function (request, response) {
             <p><textarea name="description" >${description}</textarea></p>
             <p><input type="submit"></p>
             </form>
-            `,
-          `<a href="/create">create</a>
+          `,
+          `
+            <a href="/create">create</a>
             <a href="/update?id=${title}">update</a>            
-            `
+          `
         );
         response.writeHead(200);
         response.end(html);
