@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <%- include('../layout/head') %>
+</head>
+<body>
+  <%- include('../layout/header') %>
+	<div class="container">
+		<section>
+			<form class="form-horizontal" method="post" action="/board/<%=article._id%>?_method=delete">
+				<div class="form-group">
+					<label for="writer" class="col-sm-1 control-label">작성자</label>
+					<div class="col-sm-3">
+						<input type="text" class="form-control" readonly value="<%=article.writer%>">
+					</div>
+				</div>
+				<div class="form-group">
+					<label for="title" class="col-sm-1 control-label">제목</label>
+					<div class="col-sm-11">
+						<input type="text" class="form-control" readonly value="<%=article.title%>">
+					</div>
+				</div>
+				<div class="form-group">
+					<label for="content" class="sr-only">내용</label>
+					<div class="col-sm-12">
+						<textarea rows="15" class="form-control" readonly><%=article.content%></textarea>							
+					</div>
+				</div>
+				<hr>
+				<div class="form-group">
+					<div class="text-center">
+						<a href="/board/" class="btn btn-primary">목록</a>
+						<button type="submit" class="btn btn-default">삭제</button>
+					</div>
+				</div>
+			</form>
+		</section>
+	</div>
+  <%- include('../layout/footer') %>
+</body>
+</html>
+	
